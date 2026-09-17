@@ -15,7 +15,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 // --- 1) Snapshot kaynagi (gecmis grafik icin) ---
 // GitHub'a push ettikten sonra {user}/{repo} kismini kendi repo'nla degistir.
 const SNAPSHOT_URL =
-  "https://raw.githubusercontent.com/USER/REPO/main/data/prices.json";
+  "https://raw.githubusercontent.com/seymenogluengin-coder/piyasa/main/data/prices.json";
 
 // --- 2) Canli kaynak (uygulama acikken anlik fiyat) ---
 const LIVE_FX_URL =
