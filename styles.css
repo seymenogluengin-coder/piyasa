@@ -1,0 +1,236 @@
+/* PIYASA — piyasa terminali. Mürekkep zemin, tablo rakamları, kısıtlı palet. */
+
+:root {
+  --ink: #0b0f15;
+  --ink-2: #0e131c;
+  --raise: #131a26;
+  --raise-2: #172030;
+  --hair: rgba(255, 255, 255, 0.075);
+  --hair-strong: rgba(255, 255, 255, 0.14);
+
+  --text: #e8edf4;
+  --dim: #9aa6b8;
+  --faint: #8792a4;
+
+  --up: #46b98a;
+  --up-soft: rgba(70, 185, 138, 0.14);
+  --down: #e5595b;
+  --down-soft: rgba(229, 89, 91, 0.14);
+  --gold: #d9a441;
+  --gold-soft: rgba(217, 164, 65, 0.14);
+
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow: 0 10px 30px -14px rgba(0, 0, 0, 0.7), 0 3px 8px -4px rgba(0, 0, 0, 0.5);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --pad: clamp(1.1rem, 3.5vw, 2.25rem);
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background:
+    radial-gradient(120% 90% at 50% -10%, #101724 0%, var(--ink) 55%) fixed;
+  color: var(--text);
+  font-family: -apple-system, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+/* Tarayıcı yüzeyleri — palete boyanır */
+::selection { background: var(--gold-soft); color: #fff; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
+* { scrollbar-width: thin; scrollbar-color: var(--hair-strong) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--hair-strong); border-radius: 20px; border: 3px solid transparent; background-clip: content-box; }
+
+a { color: var(--dim); text-underline-offset: 2px; text-decoration-color: var(--hair-strong); }
+a:hover { color: var(--text); }
+
+/* ---------- Üst çubuk ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: clamp(1rem, 3vw, 1.5rem) var(--pad);
+  border-bottom: 1px solid var(--hair);
+}
+
+.brand { display: flex; align-items: baseline; gap: 0.6rem; }
+.brand__mark {
+  font-size: clamp(1.15rem, 3.5vw, 1.4rem);
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  padding-left: 0.28em; /* letter-spacing dengeler */
+}
+.brand__sub { color: var(--faint); font-size: 0.82rem; letter-spacing: 0.02em; }
+
+.status { display: flex; align-items: center; gap: 1.25rem; }
+.status__time { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; }
+.status__label { color: var(--faint); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+#updated { color: var(--dim); font-size: 0.92rem; }
+
+.pulse { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: var(--dim); }
+.pulse__dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--faint);
+  box-shadow: 0 0 0 0 transparent;
+}
+.status[data-state="live"] .pulse__dot {
+  background: var(--up);
+  animation: beat 2.4s var(--ease-out) infinite;
+}
+.status[data-state="error"] .pulse__dot { background: var(--down); }
+@keyframes beat {
+  0%, 100% { box-shadow: 0 0 0 0 var(--up-soft); }
+  50% { box-shadow: 0 0 0 5px transparent; }
+}
+
+/* ---------- Yerleşim ---------- */
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 2.75rem) var(--pad) 3rem;
+}
+
+.group { margin-top: clamp(1.75rem, 4vw, 2.75rem); }
+.group:first-child { margin-top: 0; }
+.group__title {
+  margin: 0 0 1.1rem; /* başlık üstü boşluk (group margin) alttan fazla */
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.group__title--gold { color: var(--gold); }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(0.7rem, 2vw, 1rem);
+}
+
+/* ---------- Kart ---------- */
+.card {
+  position: relative;
+  display: grid;
+  gap: 0.55rem;
+  padding: 1.05rem 1.15rem 1.15rem;
+  background: linear-gradient(180deg, var(--raise-2), var(--raise));
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.22s var(--ease-out), border-color 0.22s var(--ease-out),
+    box-shadow 0.22s var(--ease-out);
+}
+.card:hover { transform: translateY(-2px); border-color: var(--hair-strong); }
+.card[aria-pressed="true"] {
+  border-color: var(--gold);
+  box-shadow: var(--shadow), inset 0 0 0 1px var(--gold-soft);
+}
+
+.card__top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.card__label { font-size: 0.92rem; font-weight: 600; letter-spacing: 0.01em; }
+.card__sub { color: var(--faint); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.card__price {
+  font-size: clamp(1.5rem, 5vw, 1.9rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.card__price .cur { color: var(--faint); font-size: 0.62em; font-weight: 500; margin-right: 0.15em; }
+
+.card__foot { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.15rem; }
+.card__spark { width: 62px; height: 24px; flex: none; overflow: visible; }
+
+/* Değer güncelleme parıltısı (canlı geldi) */
+.card__price.flash-up { animation: flash-up 0.7s var(--ease-out); }
+.card__price.flash-down { animation: flash-down 0.7s var(--ease-out); }
+@keyframes flash-up { from { color: var(--up); } to { color: var(--text); } }
+@keyframes flash-down { from { color: var(--down); } to { color: var(--text); } }
+
+/* ---------- Yön çipi ---------- */
+.chip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.82rem; font-weight: 600; letter-spacing: 0.01em;
+  padding: 0.16rem 0.5rem; border-radius: 999px;
+  color: var(--dim);
+}
+.chip--up { color: var(--up); background: var(--up-soft); }
+.chip--down { color: var(--down); background: var(--down-soft); }
+.chip__ico { width: 9px; height: 9px; }
+
+/* ---------- Detay ---------- */
+.detail {
+  margin-top: clamp(1.75rem, 4vw, 2.75rem);
+  padding: 1.5rem;
+  background: linear-gradient(180deg, var(--raise-2), var(--raise));
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.detail__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.detail__eyebrow { margin: 0 0 0.15rem; color: var(--faint); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.detail__title { margin: 0; font-size: 1.15rem; font-weight: 650; }
+.detail__now { display: flex; align-items: baseline; gap: 0.7rem; }
+.detail__price { font-size: clamp(1.4rem, 5vw, 1.8rem); font-weight: 650; letter-spacing: -0.02em; }
+
+.chart { margin: 1.25rem 0 0.5rem; }
+.chart svg { display: block; width: 100%; height: auto; }
+.chart .grid-line { stroke: var(--hair); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.chart .price-line { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.chart .price-area { opacity: 0.14; }
+.chart .axis-txt { fill: var(--faint); font-size: 11px; }
+
+.detail__meta { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 0.75rem; color: var(--dim); font-size: 0.82rem; }
+.detail__meta b { color: var(--text); font-weight: 600; }
+
+/* ---------- Durumlar ---------- */
+.notice {
+  margin-top: 2rem; padding: 1rem 1.15rem;
+  border: 1px solid var(--hair); border-radius: var(--radius-sm);
+  background: var(--ink-2); color: var(--dim); font-size: 0.9rem;
+}
+.card.is-skeleton { pointer-events: none; }
+.card.is-skeleton .card__price,
+.card.is-skeleton .card__label { color: transparent; }
+.card.is-skeleton .card__price { background: var(--hair); border-radius: 6px; width: 60%; }
+
+/* ---------- Alt bilgi ---------- */
+.foot {
+  max-width: 1080px; margin: 0 auto; padding: 2rem var(--pad) 3rem;
+  border-top: 1px solid var(--hair); color: var(--faint); font-size: 0.8rem;
+}
+.foot p { margin: 0.4rem 0; }
+.foot__note { color: var(--faint); }
+
+/* ---------- Giriş hareketi (tek yetkili an) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .group, .detail { animation: rise 0.55s var(--ease-out) both; }
+  .group:nth-child(2) { animation-delay: 0.07s; }
+  .detail { animation-delay: 0.14s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 620px) {
+  .cards { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 400px) {
+  .cards { grid-template-columns: 1fr; }
+  .status { gap: 0.85rem; }
+}

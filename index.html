@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PIYASA — Döviz &amp; Altın</title>
+  <meta name="description" content="Canlı döviz ve altın fiyatları — sakin bir piyasa terminali. Tamamen bedava, sunucusuz." />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#0b0f15" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand__mark">PIYASA</span>
+      <span class="brand__sub">döviz &amp; altın</span>
+    </div>
+    <div class="status" id="status" data-state="loading">
+      <span class="status__time">
+        <span class="status__label">son güncelleme</span>
+        <time id="updated" datetime="">—</time>
+      </span>
+      <span class="pulse" title="Canlı fiyat akışı">
+        <span class="pulse__dot" aria-hidden="true"></span>
+        <span class="pulse__text" id="pulse-text">bağlanıyor</span>
+      </span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="group" aria-labelledby="g-doviz">
+      <h2 class="group__title" id="g-doviz">Döviz</h2>
+      <div class="cards" id="cards-doviz"></div>
+    </section>
+
+    <section class="group" aria-labelledby="g-altin">
+      <h2 class="group__title group__title--gold" id="g-altin">Altın</h2>
+      <div class="cards" id="cards-altin"></div>
+    </section>
+
+    <section class="detail" id="detail" aria-live="polite" hidden>
+      <div class="detail__head">
+        <div>
+          <p class="detail__eyebrow" id="detail-sub">—</p>
+          <h3 class="detail__title" id="detail-title">—</h3>
+        </div>
+        <div class="detail__now">
+          <span class="detail__price" id="detail-price">—</span>
+          <span class="chip" id="detail-chip"></span>
+        </div>
+      </div>
+      <figure class="chart" id="chart-wrap">
+        <!-- büyük geçmiş grafiği buraya çizilir -->
+      </figure>
+      <div class="detail__meta" id="detail-meta"></div>
+    </section>
+
+    <p class="notice" id="notice" role="status" hidden></p>
+  </main>
+
+  <footer class="foot">
+    <p class="foot__sources">
+      Kaynaklar: döviz <a href="https://frankfurter.dev" rel="noopener">Frankfurter</a> ·
+      yedek TCMB · altın ons XAU. Hepsi bedava, sunucusuz.
+    </p>
+    <p class="foot__note">
+      Çeyrek/tam altın 22 ayar standart gramajdan yaklaşık hesaplanır; kuyumcu alış-satış
+      farkını yansıtmaz, referans fiyattır.
+    </p>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

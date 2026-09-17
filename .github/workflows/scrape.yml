@@ -1,0 +1,42 @@
+name: Fiyat Snapshot
+
+on:
+  schedule:
+    # Her 15 dakikada bir. Not: GitHub Actions cron'u yogun saatlerde
+    # birkac dakika gecikebilir - garanti "tam 15dk" degil, "~15dk".
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}   # elle tetikleme icin
+
+# Ayni anda tek calisma - cakisan commit'leri onler
+concurrency:
+  group: price-scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # data/prices.json commit'i icin gerekli
+    steps:
+      - name: Repo'yu al
+        uses: actions/checkout@v4
+
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fiyatlari cek
+        run: python scripts/scrape.py
+
+      - name: Degisiklik varsa commit et
+        run: |
+          git config user.name "piyasa-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/prices.json
+          if git diff --staged --quiet; then
+            echo "Degisiklik yok, commit atlanIyor."
+          else
+            git commit -m "fiyat snapshot: $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
