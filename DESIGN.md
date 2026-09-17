@@ -18,13 +18,18 @@ ayraçlar. Neon-parıltılı kripto panosunu ve jenerik ikon-kart ızgarasını 
 Sistem sans stack; **`font-variant-numeric: tabular-nums`** her yerde. Fiyat büyük, `letter-spacing -0.02em`. Etiketler küçük-kapital, harf aralıklı.
 
 ## Bileşenler
-- **Kart** (`.card`, `<button>`): üstte etiket + kod, büyük fiyat (`₺`), altında yön çipi + sparkline. Hover: 2px kalk. Seçili: `aria-pressed` + altın kenar.
-- **Yön çipi** (`.chip`): SVG ok + `%±x,yz`. 2 haneye yuvarlanınca 0,00 ise **"değişim yok"** (nötr) — sıfır-yön yanılgısını önler.
-- **Sparkline / detay grafiği**: gerçek `history`'den SVG, `vector-effect: non-scaling-stroke`. <2 nokta → grafik gizli, boş-durum notu.
+- **Hero — öne çıkanlar** (`.hero`, iki `.hero__panel`): sahnenin çapası. **Dolar** ve **Gram Altın** her zaman büyük fiyat + her zaman açık alan grafiğiyle üstte durur; masaüstünde yan yana, ≤640px alt alta. Gram Altın paneli altın etiket + altın-yumuşak kenar taşır. Grafik `series()`'ten çizilir; rengi çiple aynı yönden gelir.
+- **Kart** (`.card`, `<button>`): üstte etiket + kod, büyük fiyat (`₺`), altında yön çipi + sparkline. Hover: 2px kalk. Seçili: `aria-pressed` + altın kenar. Bir karta tıklanınca ızgaranın altında tam-genişlik detay grafiği açılır (`detailOpen`; açılışta gizli).
+- **Yön çipi** (`.chip`): SVG ok + `%±x,yz`. 2 haneye yuvarlanınca 0,00 ise **"değişim yok"** (nötr) — sıfır-yön yanılgısını önler. Yön tek kaynaktan: `chipDir(pct)`.
+- **Grafik serisi** (`series()`): `history` + (varsa) canlı son nokta. Böylece grafiğin bitiş noktası ve rengi hep büyük fiyat/çiple aynı yönü gösterir — yeşil çip + kırmızı çizgi çelişkisi olmaz. `vector-effect: non-scaling-stroke`. <2 nokta → boş-durum notu.
+- **Sparkline / detay grafiği**: aynı `series()`'ten SVG. Detay grafiği eksenli ve tıklamayla açılır.
 - **Nabız**: canlı akışta `--up` nokta, 2.4s nabız (reduced-motion'da statik).
 
 ## Hareket (tek yetkili an)
-Giriş: grup/detay `rise` (opacity + translateY, ease-out, stagger). Canlı değer değişince fiyatta 0.7s `flash-up/down`. Hepsi `prefers-reduced-motion` altında kapalı.
+- **Hero grafiği çizimi:** açılışta bir kez, çizgi soldan sağa (`.hero__chart--intro`, `stroke-dashoffset 1→0`, 0.9s ease-out, 0.25s gecikme; alan opaklığı 0.6s ile açılır). Canlı yeniden çizimde `--intro` verilmez → **tekrar oynamaz**.
+- **Giriş:** `.hero`/`.group`/`.detail` `rise` (opacity + translateY, ease-out, kademeli).
+- **Canlı değer:** fiyatta 0.7s `flash-up/down` renk geçişi (hero + kart).
+- Hepsi `prefers-reduced-motion` altında kapalı.
 
 ## Durumlar
 loading (bağlanıyor) · live (canlı) · error (akış yok) · empty (yetersiz geçmiş) · hover · focus-visible (altın halka) · selected.

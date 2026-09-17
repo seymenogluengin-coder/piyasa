@@ -23,7 +23,10 @@ const BY_CODE = Object.fromEntries(INSTRUMENTS.map((i) => [i.code, i]));
 let store = null; // snapshot
 let live = {}; // canlı currents
 let selected = "USD_TRY";
-const lastShown = {}; // parıltı için son gösterilen değer
+let detailOpen = false; // detay grafiği yalnız bir karta tıklanınca açılır
+const HERO_CODES = ["USD_TRY", "GRAM_ALTIN"]; // üstte öne çıkan iki değer
+const lastShown = {}; // parıltı için son gösterilen değer (kartlar)
+const lastShownHero = {}; // parıltı için son gösterilen değer (hero)
 
 // --- Yardımcılar ---
 const $ = (sel) => document.querySelector(sel);
@@ -51,6 +54,23 @@ function get(code) {
   const change = current != null && dayStart != null ? current - dayStart : 0;
   const pct = current != null && dayStart ? (change / dayStart) * 100 : 0;
   return { current, history, change, pct, isLive: live[code] != null };
+}
+
+// Çiple aynı yuvarlama: 2 haneye yuvarlanınca 0,00 ise yön nötr.
+function chipDir(pct) {
+  const p = Math.round(pct * 100) / 100;
+  return p > 0 ? 1 : p < 0 ? -1 : 0;
+}
+
+// Çizilecek seri: snapshot geçmişi + (varsa) canlı son nokta.
+// Böylece grafiğin bitiş noktası ve rengi hep çiple/büyük fiyatla aynı yönü gösterir.
+function series(code) {
+  const { history, current } = get(code);
+  const vals = history.map((h) => h.value);
+  if (current != null && Number.isFinite(current) && (!vals.length || vals[vals.length - 1] !== current)) {
+    vals.push(current);
+  }
+  return vals;
 }
 
 // --- Veri çekme ---
@@ -87,8 +107,7 @@ async function fetchLive() {
 }
 
 // --- SVG çizim ---
-function sparkline(history, dir) {
-  const vals = history.map((h) => h.value);
+function sparkline(vals, dir) {
   if (vals.length < 2) return "";
   const w = 62, h = 24, p = 3;
   const min = Math.min(...vals), max = Math.max(...vals);
@@ -114,7 +133,7 @@ function chipHTML(change, pct) {
   // Gösterilen 2 haneye yuvarlanır; yuvarlamada 0,00 çıkan hareketi nötr say
   // (tek snapshot varken canlı-snapshot mikro farkı yanıltıcı yön göstermesin).
   const p = Math.round(pct * 100) / 100;
-  const dir = p > 0 ? 1 : p < 0 ? -1 : 0;
+  const dir = chipDir(pct);
   const cls = dir > 0 ? "chip--up" : dir < 0 ? "chip--down" : "";
   const sign = p > 0 ? "+" : "";
   const body = dir === 0
@@ -125,8 +144,8 @@ function chipHTML(change, pct) {
 
 // --- Kart render ---
 function cardHTML(inst) {
-  const { current, history, change, pct } = get(inst.code);
-  const dir = Math.sign(change);
+  const { current, change, pct } = get(inst.code);
+  const dir = chipDir(pct);
   return `
     <button class="card" type="button" data-code="${inst.code}" aria-pressed="${selected === inst.code}">
       <span class="card__top">
@@ -136,7 +155,7 @@ function cardHTML(inst) {
       <span class="card__price" data-price><span class="cur">₺</span>${fmt(inst.code, current)}</span>
       <span class="card__foot">
         ${chipHTML(change, pct)}
-        ${sparkline(history, dir)}
+        ${sparkline(series(inst.code), dir)}
       </span>
     </button>`;
 }
@@ -148,6 +167,75 @@ function renderCards() {
   }
   for (const btn of document.querySelectorAll(".card")) {
     btn.addEventListener("click", () => selectInstrument(btn.dataset.code));
+  }
+}
+
+// --- Hero (öne çıkanlar) ---
+// intro=true yalnız ilk çizimde: çizgi bir kez soldan sağa çizilir (tek yetkili an).
+function heroChart(code, intro) {
+  const vals = series(code);
+  const dir = chipDir(get(code).pct);
+  if (vals.length < 2) {
+    return `<p class="hero__empty">Eğilim grafiği için snapshot'lar birikiyor…</p>`;
+  }
+  const W = 520, H = 140, p = 6;
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const span = max - min || 1;
+  const x = (i) => p + (i / (vals.length - 1)) * (W - 2 * p);
+  const y = (v) => p + (1 - (v - min) / span) * (H - 2 * p);
+  const line = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const stroke = dir > 0 ? "var(--up)" : dir < 0 ? "var(--down)" : "var(--faint)";
+  const area = `M${x(0).toFixed(1)},${H - p} L${line} L${x(vals.length - 1).toFixed(1)},${H - p} Z`;
+  const cls = "hero__chart" + (intro ? " hero__chart--intro" : "");
+  return `<svg class="${cls}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${BY_CODE[code].label} eğilimi">
+    <path class="hero__area" d="${area}" fill="${stroke}" />
+    <polyline class="hero__line" points="${line}" pathLength="1" stroke="${stroke}" />
+  </svg>`;
+}
+
+function heroPanelHTML(inst) {
+  const { current, change, pct } = get(inst.code);
+  return `
+    <article class="hero__panel hero__panel--${inst.group}" data-code="${inst.code}">
+      <header class="hero__head">
+        <span class="hero__label">${inst.label}</span>
+        <span class="hero__sub">${inst.sub}</span>
+      </header>
+      <div class="hero__body">
+        <span class="hero__price" data-hero-price><span class="cur">₺</span>${fmt(inst.code, current)}</span>
+        ${chipHTML(change, pct)}
+      </div>
+      ${heroChart(inst.code, true)}
+    </article>`;
+}
+
+function renderHero() {
+  const host = $("#hero");
+  if (!host) return;
+  host.innerHTML = HERO_CODES.map((code) => heroPanelHTML(BY_CODE[code])).join("");
+  for (const code of HERO_CODES) lastShownHero[code] = get(code).current;
+}
+
+// Canlı değeri hero panellerine yansıt (grafiği yeniden çizmeden — çizim tek sefer)
+function applyLiveToHero() {
+  for (const code of HERO_CODES) {
+    const panel = document.querySelector(`.hero__panel[data-code="${code}"]`);
+    if (!panel) continue;
+    const { current, change, pct } = get(code);
+    const priceEl = panel.querySelector("[data-hero-price]");
+    const prev = lastShownHero[code];
+    priceEl.innerHTML = `<span class="cur">₺</span>${fmt(code, current)}`;
+    panel.querySelector(".chip").outerHTML = chipHTML(change, pct);
+    // Grafiği canlı seriyle yeniden çiz — ama animasyonsuz (intro=false).
+    const chartEl = panel.querySelector(".hero__chart, .hero__empty");
+    if (chartEl) chartEl.outerHTML = heroChart(code, false);
+    if (prev != null && current != null && current !== prev) {
+      const cls = current > prev ? "flash-up" : "flash-down";
+      priceEl.classList.remove("flash-up", "flash-down");
+      void priceEl.offsetWidth; // reflow → animasyonu yeniden tetikle
+      priceEl.classList.add(cls);
+    }
+    lastShownHero[code] = current;
   }
 }
 
@@ -215,6 +303,7 @@ function renderDetail() {
 
 function selectInstrument(code) {
   selected = code;
+  detailOpen = true;
   for (const btn of document.querySelectorAll(".card")) {
     btn.setAttribute("aria-pressed", String(btn.dataset.code === code));
   }
@@ -230,7 +319,9 @@ function applyLiveToCards() {
     const priceEl = btn.querySelector("[data-price]");
     const prev = lastShown[inst.code];
     priceEl.innerHTML = `<span class="cur">₺</span>${fmt(inst.code, current)}`;
-    btn.querySelector(".chip").outerHTML = chipHTML(change, pct);
+    // Çip + sparkline'ı birlikte tazele — ikisi de aynı (canlı) yönü göstersin.
+    btn.querySelector(".card__foot").innerHTML =
+      chipHTML(change, pct) + sparkline(series(inst.code), chipDir(pct));
     if (prev != null && current != null && current !== prev) {
       const cls = current > prev ? "flash-up" : "flash-down";
       priceEl.classList.remove("flash-up", "flash-down");
@@ -256,7 +347,8 @@ async function refreshLive() {
   try {
     live = await fetchLive();
     applyLiveToCards();
-    if (selected) renderDetail();
+    applyLiveToHero();
+    if (detailOpen) renderDetail();
     setStatus("live", "canlı", new Date().toISOString());
   } catch (e) {
     console.warn("[piyasa] canlı döviz alınamadı:", e);
@@ -276,7 +368,7 @@ async function init() {
     $("#notice").textContent =
       "Geçmiş veri (data/prices.json) yüklenemedi. Canlı fiyatlar yine de çekilecek; grafik için snapshot gerekir.";
   }
-  selectInstrument(selected);
+  renderHero();
   await refreshLive();
   setInterval(refreshLive, LIVE_REFRESH_MS);
   document.addEventListener("visibilitychange", () => {

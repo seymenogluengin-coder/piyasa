@@ -119,6 +119,40 @@ a:hover { color: var(--text); }
   gap: clamp(0.7rem, 2vw, 1rem);
 }
 
+/* ---------- Hero (öne çıkanlar) ---------- */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(0.8rem, 2vw, 1.15rem);
+  margin-bottom: clamp(1.75rem, 4vw, 2.75rem);
+}
+.hero__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: clamp(1.15rem, 2.5vw, 1.5rem);
+  background: linear-gradient(180deg, var(--raise-2), var(--raise));
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.hero__panel--altin { border-color: var(--gold-soft); }
+.hero__head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.hero__label { font-size: 1rem; font-weight: 650; letter-spacing: 0.01em; }
+.hero__panel--altin .hero__label { color: var(--gold); }
+.hero__sub { color: var(--faint); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.hero__body { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
+.hero__price { font-size: clamp(2rem, 6vw, 2.9rem); font-weight: 700; letter-spacing: -0.025em; line-height: 1; }
+.hero__price .cur { color: var(--faint); font-size: 0.5em; font-weight: 500; margin-right: 0.12em; }
+.hero__price.flash-up { animation: flash-up 0.7s var(--ease-out); }
+.hero__price.flash-down { animation: flash-down 0.7s var(--ease-out); }
+.hero__chart { display: block; width: 100%; height: auto; margin-top: 0.35rem; }
+.hero__line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.hero__area { opacity: 0.13; }
+.hero__empty { margin: 0.4rem 0 0.15rem; color: var(--faint); font-size: 0.8rem; }
+
 /* ---------- Kart ---------- */
 .card {
   position: relative;
@@ -220,13 +254,23 @@ a:hover { color: var(--text); }
 
 /* ---------- Giriş hareketi (tek yetkili an) ---------- */
 @media (prefers-reduced-motion: no-preference) {
-  .group, .detail { animation: rise 0.55s var(--ease-out) both; }
-  .group:nth-child(2) { animation-delay: 0.07s; }
-  .detail { animation-delay: 0.14s; }
+  .hero, .group, .detail { animation: rise 0.55s var(--ease-out) both; }
+  .group--doviz { animation-delay: 0.06s; }
+  .group--altin { animation-delay: 0.12s; }
+  .detail { animation-delay: 0.06s; }
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  /* Hero grafiği açılışta bir kez çizilir (tek yetkili an); canlı yeniden çizimde oynamaz */
+  .hero__chart--intro .hero__line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: hero-draw 0.9s var(--ease-out) 0.25s forwards; }
+  .hero__chart--intro .hero__area { opacity: 0; animation: hero-fill 0.6s var(--ease-out) 0.75s forwards; }
+  @keyframes hero-draw { to { stroke-dashoffset: 0; } }
+  @keyframes hero-fill { to { opacity: 0.13; } }
 }
 
 /* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .hero { grid-template-columns: 1fr; }
+}
 @media (max-width: 620px) {
   .cards { grid-template-columns: 1fr 1fr; }
 }
